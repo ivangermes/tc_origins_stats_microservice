@@ -1,16 +1,13 @@
-import os
-import logging
-
-#from datetime import datetime #python3.11 isoparse
-from dateutil.parser import isoparse
-
 import asyncio
+import logging
+import os
+
 from aiohttp import web
 from aiohttp.web import HTTPBadRequest
-
+# from datetime import datetime #python3.11 isoparse
+from dateutil.parser import isoparse
 from motor.motor_asyncio import AsyncIOMotorClient
 from pymongo.server_api import ServerApi
-
 
 # environment variables
 LOG_LEVEL = os.environ.get('LOG_LEVEL', "DEBUG")
@@ -21,7 +18,7 @@ SERVICE_PORT = os.environ.get('SERVICE_PORT', None)
 MONGO_URI = os.environ.get('MONGO_URI')
 
 DB_NAME = os.environ.get("DB_NAME")
-COLLECTION_NAME =  os.environ.get("COLLECTION_NAME")
+COLLECTION_NAME = os.environ.get("COLLECTION_NAME")
 
 
 async def health(request):
@@ -29,9 +26,10 @@ async def health(request):
     await app["db"].command('ping')
     return web.Response(text="HEALTHY")
 
+
 async def get_origins_stats(request):
     app = request.app
-    
+
     if request.method == "GET":
         params = request.query
     else:
@@ -41,7 +39,7 @@ async def get_origins_stats(request):
     time_from = None
     if time_from_str is not None:
         try:
-            time_from =  isoparse(time_from_str)
+            time_from = isoparse(time_from_str)
         except ValueError:
             raise HTTPBadRequest
 
@@ -49,10 +47,9 @@ async def get_origins_stats(request):
     time_to = None
     if time_to_str is not None:
         try:
-            time_to =  isoparse(time_to_str)
+            time_to = isoparse(time_to_str)
         except ValueError:
             raise HTTPBadRequest
-
 
     stage_match_status = {
         '$match': {
@@ -69,8 +66,8 @@ async def get_origins_stats(request):
 
     stage_project_trim = {
         '$project': {
-            'total': 1, 
-            'origin': 1, 
+            'total': 1,
+            'origin': 1,
             'tickets': 1
         }
     }
@@ -78,8 +75,8 @@ async def get_origins_stats(request):
     stage_group_origin = {
         '$group': {
             '_id': '$origin',
-            'tickets': { '$sum': '$tickets' },
-            'total': { '$sum': "$total" }
+            'tickets': {'$sum': '$tickets'},
+            'total': {'$sum': "$total"}
         }
     }
 
@@ -87,7 +84,7 @@ async def get_origins_stats(request):
         '$project': {
             '_id': 0,
             'origin': "$_id",
-            'total': { "$toInt": "$total"},
+            'total': {"$toInt": "$total"},
             'tickets': 1,
         }
     }
@@ -103,13 +100,13 @@ async def get_origins_stats(request):
     cursor = collection.aggregate(pipeline)
 
     results = await cursor.to_list(length=None)
-    
+
     return web.json_response(results)
 
 
 async def setup_app(app):
-    logging.info(f'setup app')
-    logging.info(f'setup mongo connection')
+    logging.info('setup app')
+    logging.info('setup mongo connection')
 
     loop = asyncio.get_event_loop()
     client = AsyncIOMotorClient(MONGO_URI, server_api=ServerApi('1'), io_loop=loop)
@@ -121,23 +118,23 @@ async def setup_app(app):
 
     # collections = await db.list_collection_names()
     # if COLLECTION_NAME not in collections:
-    #     raise 
+    #     raise
 
     collection = db.get_collection(COLLECTION_NAME)
-    
+
     app["db"] = db
     app["collection"] = collection
 
 
 async def close_app(app):
-    logging.info(f'close mongo connection')
+    logging.info('close mongo connection')
     app['db'].client.close()
-    logging.info(f'close app')
+    logging.info('close app')
 
 
 def main():
     logging.basicConfig(level=logging.DEBUG)
-    
+
     app = web.Application()
 
     app.router.add_get("/health", health)
@@ -147,7 +144,7 @@ def main():
     app.on_startup.append(setup_app)
     app.on_cleanup.append(close_app)
 
-    web.run_app(app, host=SERVICE_HOST, port=SERVICE_PORT )
+    web.run_app(app, host=SERVICE_HOST, port=SERVICE_PORT)
 
 
 if __name__ == '__main__':
