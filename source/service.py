@@ -100,9 +100,11 @@ async def get_origins_stats(request):
     collection = app["collection"]
     cursor = collection.aggregate(pipeline)
 
-    results = await cursor.to_list(length=None)
+    origins_stats = []
+    async for origin_stat in cursor:
+        origins_stats.append(origin_stat)
 
-    return web.json_response(results)
+    return web.json_response(origins_stats)
 
 
 async def setup_app(app):
