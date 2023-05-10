@@ -31,6 +31,7 @@ async def health(request):
 async def get_origins_stats(request):
     app = request.app
 
+    # check and transform parameters
     if request.method == "GET":
         params = request.query
     else:
@@ -52,6 +53,8 @@ async def get_origins_stats(request):
         except ValueError:
             raise HTTPBadRequest
 
+    # constructing pipline
+    # TODO: try to use SON instead of Dict
     stage_match_status = {
         "$match": {
             "status": "done"
@@ -65,6 +68,7 @@ async def get_origins_stats(request):
         if time_to:
             stage_match_status["$match"]["created_at"]["$lte"] = time_to
 
+    # decrease computing resources usage
     stage_project_trim = {
         "$project": {
             "total": 1,
@@ -81,6 +85,7 @@ async def get_origins_stats(request):
         }
     }
 
+    # make final data model view
     stage_project_presentation = {
         "$project": {
             "_id": 0,
