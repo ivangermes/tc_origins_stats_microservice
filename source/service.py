@@ -9,6 +9,7 @@ from aiohttp.web import HTTPBadRequest
 from dateutil.parser import isoparse
 from motor.motor_asyncio import AsyncIOMotorClient
 from pymongo.server_api import ServerApi
+from pymongo.errors import InvalidName
 
 # environment variables
 LOG_LEVEL = os.environ.get("LOG_LEVEL", "DEBUG")
@@ -123,14 +124,15 @@ async def setup_app(app):
 
     db = client.get_database(DB_NAME)
 
-    # check collection exist
-    await db.validate_collection(
-        COLLECTION_NAME, scandata=False, full=False, background=False
-    )
 
-    # collections = await db.list_collection_names()
-    # if COLLECTION_NAME not in collections:
-    #     raise
+    # await db.validate_collection(
+    #     COLLECTION_NAME, scandata=False, full=False, background=False
+    # )
+
+    # check collection exist
+    collections = await db.list_collection_names()
+    if COLLECTION_NAME not in collections:
+         raise InvalidName("Collection '{}.{}' does not exist".format(DB_NAME, COLLECTION_NAME))
 
     collection = db.get_collection(COLLECTION_NAME)
 
