@@ -3,6 +3,7 @@ import logging
 import os
 
 from aiohttp import web
+from aiohttp.web import Request, Response
 from aiohttp.web import HTTPBadRequest
 
 # from datetime import datetime #python3.11 isoparse
@@ -23,13 +24,13 @@ DB_NAME = os.environ.get("DB_NAME")
 COLLECTION_NAME = os.environ.get("COLLECTION_NAME")
 
 
-async def health(request):
+async def health(request: Request) -> Response:
     app = request.app
     await app["db"].command("ping")
     return web.Response(text="HEALTHY")
 
 
-async def get_origins_stats(request):
+async def get_origins_stats(request: Request) -> Response:
     app = request.app
 
     # check and transform parameters
@@ -113,7 +114,7 @@ async def get_origins_stats(request):
     return web.json_response(origins_stats)
 
 
-async def setup_app(app):
+async def setup_app(app: web.Application) -> None:
     logging.info("setup app")
     logging.info("setup mongo connection")
 
@@ -124,7 +125,6 @@ async def setup_app(app):
 
     db = client.get_database(DB_NAME)
 
-
     # await db.validate_collection(
     #     COLLECTION_NAME, scandata=False, full=False, background=False
     # )
@@ -132,7 +132,9 @@ async def setup_app(app):
     # check collection exist
     collections = await db.list_collection_names()
     if COLLECTION_NAME not in collections:
-         raise InvalidName("Collection '{}.{}' does not exist".format(DB_NAME, COLLECTION_NAME))
+        raise InvalidName(
+            f"Collection '{DB_NAME}.{COLLECTION_NAME}' does not exist"
+        )
 
     collection = db.get_collection(COLLECTION_NAME)
 
@@ -140,7 +142,7 @@ async def setup_app(app):
     app["collection"] = collection
 
 
-async def close_app(app):
+async def close_app(app: web.Application) -> None:
     logging.info("close mongo connection")
     app["db"].client.close()
     logging.info("close app")
