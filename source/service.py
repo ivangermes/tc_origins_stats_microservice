@@ -33,13 +33,7 @@ async def health(request: Request) -> Response:
 async def get_origins_stats(request: Request) -> Response:
     app = request.app
 
-    # check and transform parameters
-    if request.method == "GET":
-        params = request.query
-    else:
-        params = await request.post()
-
-    time_from_str = params.get("time_from", None)
+    time_from_str = request.query.get("time_from", None)
     time_from = None
     if time_from_str is not None:
         try:
@@ -47,7 +41,7 @@ async def get_origins_stats(request: Request) -> Response:
         except ValueError:
             raise HTTPBadRequest
 
-    time_to_str = params.get("time_to", None)
+    time_to_str = request.query.get("time_to", None)
     time_to = None
     if time_to_str is not None:
         try:
@@ -155,7 +149,6 @@ def main():
 
     app.router.add_get("/health", health)
     app.router.add_get("/v1/origins_stats", get_origins_stats)
-    app.router.add_post("/v1/origins_stats", get_origins_stats)
 
     app.on_startup.append(setup_app)
     app.on_cleanup.append(close_app)
