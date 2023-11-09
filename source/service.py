@@ -38,16 +38,19 @@ async def get_origins_stats(request: Request) -> Response:
     if time_from_str is not None:
         try:
             time_from = isoparse(time_from_str)
-        except ValueError:
-            raise HTTPBadRequest
+        except ValueError as er:
+            raise HTTPBadRequest(text=f"'time_from' parameter error: {er}")
 
     time_to_str = request.query.get("time_to", None)
     time_to = None
     if time_to_str is not None:
         try:
             time_to = isoparse(time_to_str)
-        except ValueError:
-            raise HTTPBadRequest
+        except ValueError as er:
+            raise HTTPBadRequest(text=f"'time_to' parameter error: {er}")
+
+    if time_to and time_from and time_from > time_to:
+        raise HTTPBadRequest(text="'time_from' must be less then 'time_to'")
 
     # constructing pipline
     # TODO: try to use SON instead of Dict
