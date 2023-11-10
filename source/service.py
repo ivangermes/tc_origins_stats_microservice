@@ -142,7 +142,7 @@ async def close_app(app: web.Application) -> None:
 
 
 def main():
-    logging.basicConfig(level=logging.DEBUG)
+    logging.basicConfig(level=LOG_LEVEL)
 
     app = web.Application()
 
