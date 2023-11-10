@@ -6,7 +6,7 @@ from aiohttp import web
 from aiohttp.web import Request, Response
 from aiohttp.web import HTTPBadRequest
 
-# from datetime import datetime #python3.11 isoparse
+# from datetime import datetime  # python3.11 isoparse
 from dateutil.parser import isoparse
 from motor.motor_asyncio import AsyncIOMotorClient
 from pymongo.server_api import ServerApi
@@ -121,10 +121,6 @@ async def setup_app(app: web.Application) -> None:
     )
 
     db = client.get_database(DB_NAME)
-
-    # await db.validate_collection(
-    #     COLLECTION_NAME, scandata=False, full=False, background=False
-    # )
 
     # check collection exist
     collections = await db.list_collection_names()
